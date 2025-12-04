@@ -24,12 +24,12 @@ export const playerStore = proxy({
     pic: "",
     lyrics: "",
   },
-  // 由全局 App.tsx 注入播放器实例
+  // 由全局注入播放器实例
   injectAudioInstance(player: any) {
     playerStore.audio = player;
     console.log("全局播放器实例注入成功");
   },
-  //切歌：设置当前歌曲
+  //设置当前歌曲
   setCurrent(track: any) {
     playerStore.current = {
       id: track.id,
@@ -40,7 +40,7 @@ export const playerStore = proxy({
       lyrics: track.lrc,
     };
   },
-
+  // 拖动
   seek(sec: number) {
     if (!playerStore.audio) return;
     playerStore.audio.seek(sec);
@@ -69,7 +69,15 @@ export const playerStore = proxy({
       console.warn("加载失败:", err);
     }
   },
-
+  // 点击播放
+  async player() {
+    const trcks = searchStore.selectedList[playerStore.index];
+    playerStore.setCurrent(trcks);
+    await playerStore.load(trcks.url);
+    playerStore.play();
+    playerStore.isPlaying = true;
+  },
+  // 播放
   play() {
     try {
       playerStore.audio?.play();
@@ -78,7 +86,7 @@ export const playerStore = proxy({
       console.log("播放失败:", err);
     }
   },
-  // ---- 暂停 ----
+  //暂停
   pause() {
     try {
       playerStore.audio?.pause();
@@ -88,7 +96,7 @@ export const playerStore = proxy({
     }
   },
 
-  // ---- 下一首 ----
+  //下一首
   async next() {
     const list = searchStore.selectedList;
     if (list.length === 0) return;
@@ -102,7 +110,7 @@ export const playerStore = proxy({
     playerStore.play();
   },
 
-  // ---- 上一首 ----
+  //上一首
   async previous() {
     const list = searchStore.selectedList;
     if (list.length === 0) return;

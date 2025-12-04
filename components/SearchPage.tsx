@@ -1,19 +1,19 @@
-import React, { useState, useEffect } from "react";
+import { Ionicons } from "@expo/vector-icons";
+import { useNavigation } from "@react-navigation/native";
+import React, { useState } from "react";
 import {
-  View,
+  ActivityIndicator,
+  Image,
+  ScrollView,
+  StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
-  Image,
-  StyleSheet,
-  ScrollView,
-  ActivityIndicator,
+  View,
 } from "react-native";
-import { useNavigation } from "@react-navigation/native";
-import { Ionicons } from "@expo/vector-icons";
 import { useSnapshot } from "valtio";
-import { searchStore } from "../stores/searchStore";
 import { playerStore } from "../stores/playerStore";
+import { searchStore } from "../stores/searchStore";
 
 export default function SearchPage() {
   const snap = useSnapshot(searchStore);
@@ -45,12 +45,13 @@ export default function SearchPage() {
   };
 
   // 播放音乐
-  const playMusic = async (item: String, index: number) => {
+  const playMusic = async (item: string, index: number) => {
     searchStore.indexSelect = index;
-    playerStore.current = snap.selectedList[index];
+    playerStore.index = index;
+
     console.log("测hi是" + playerStore.current.url);
     // 模拟加载
-    playerStore.play();
+    playerStore.player();
   };
 
   // useEffect(() => {
