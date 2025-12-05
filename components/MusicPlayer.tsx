@@ -1,20 +1,20 @@
 // app/components/MusicPlayer.tsx
-import { useEffect, useMemo, useState } from "react";
-import {
-  View,
-  Text,
-  StyleSheet,
-  Dimensions,
-  TouchableOpacity,
-  Alert,
-  Image,
-} from "react-native";
+import { Ionicons } from "@expo/vector-icons";
 import Slider from "@react-native-community/slider";
 import * as Clipboard from "expo-clipboard";
-import { Ionicons } from "@expo/vector-icons";
+import { useEffect, useMemo, useState } from "react";
+import {
+  Alert,
+  Dimensions,
+  Image,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
 import { useSnapshot } from "valtio";
-import { searchStore } from "../stores/searchStore";
 import { playerStore } from "../stores/playerStore";
+import { searchStore } from "../stores/searchStore";
 const { width } = Dimensions.get("window");
 
 interface LyricLine {
@@ -212,7 +212,6 @@ export function PlayerScreen() {
     </View>
   );
 }
-
 function formatTime(sec: number) {
   if (!sec || !isFinite(sec)) return "0:00";
   const m = Math.floor(sec / 60);

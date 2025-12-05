@@ -54,21 +54,6 @@ export default function SearchPage() {
     playerStore.player();
   };
 
-  // useEffect(() => {
-  //   if (playerStore.current.url) {
-  //     setSource({ uri: playerStore.current.url });
-  //   }
-  // }, [playerStore.current.url]);
-
-  // useEffect(() => {
-  //   if (source) {
-  //     setTimeout(() => {
-  //       playerStore.play();
-  //       playerStore.isPlaying = true;
-  //     }, 50);
-  //   }
-  // }, [source]);
-
   return (
     <View style={styles.container}>
       {/* 顶部搜索栏 */}

@@ -1,15 +1,15 @@
+import { useNavigation } from "@react-navigation/native";
 import React from "react";
 import {
-  View,
-  Text,
-  StyleSheet,
-  Image,
-  ScrollView,
-  ImageBackground,
-  TouchableOpacity,
   Dimensions,
+  Image,
+  ImageBackground,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
-import { useNavigation } from "@react-navigation/native";
 const { width } = Dimensions.get("window");
 const CARD_WIDTH = (width - 40) / 2; // 卡片宽度（两列）
 const CARD_HEIGHT = CARD_WIDTH * 0.75;

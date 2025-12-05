@@ -37,7 +37,7 @@ export const playerStore = proxy({
       name: track.name,
       artist: track.artist,
       pic: track.pic,
-      lyrics: track.lrc,
+      lyrics: track.lyrics,
     };
   },
   // 拖动
@@ -46,22 +46,8 @@ export const playerStore = proxy({
     playerStore.audio.seek(sec);
     playerStore.currentTime = sec;
   },
-  // 启动播放器进度轮询
-  startProgressLoop() {
-    if (playerStore._progressTimer) return; // 不重复启动
-
-    playerStore._progressTimer = setInterval(async () => {
-      const audio = playerStore.audio;
-      if (!audio || !audio.getStatus) return;
-
-      const status = await audio.getStatus();
-      playerStore.currentTime = status.position ?? 0;
-      playerStore.duration = status.duration ?? 0;
-    }, 300);
-  },
   async load(url: string) {
     if (!playerStore.audio) return;
-
     try {
       await playerStore.audio.replace(url);
       playerStore.isPlaying = false;
