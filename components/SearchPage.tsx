@@ -48,9 +48,6 @@ export default function SearchPage() {
   const playMusic = async (item: string, index: number) => {
     searchStore.indexSelect = index;
     playerStore.index = index;
-
-    console.log("url是" + playerStore.current.url + "index" + index);
-    // 模拟加载
     playerStore.player();
   };
 

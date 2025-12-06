@@ -2,11 +2,11 @@
 import { Ionicons } from "@expo/vector-icons";
 import Slider from "@react-native-community/slider";
 import * as Clipboard from "expo-clipboard";
+import { Image } from "expo-image";
 import { useEffect, useMemo, useState } from "react";
 import {
   Alert,
   Dimensions,
-  Image,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -113,7 +113,15 @@ export function PlayerScreen() {
       <View style={styles.coverPlaceholder}>
         <Image
           style={styles.Placeholder}
-          source={require("../assets/images/bg.jpeg")}
+          source={
+            track?.pic
+              ? { uri: track.pic }
+              : require("../assets/images/bg.jpeg")
+          }
+          placeholder={require("../assets/images/bg.jpeg")}
+          contentFit="cover"
+          transition={300} // 300ms 淡入
+          cachePolicy="disk" // 磁盘缓存：下次加载更快
         />
       </View>
 
@@ -205,8 +213,8 @@ export function PlayerScreen() {
             size={40}
             color={
               searchStore.selectedList.length === 0
-                ? "#222020ff"
-                : "rgba(56, 50, 50, 0.4)"
+                ? "rgba(56, 50, 50, 0.4)"
+                : "#222020ff"
             }
           />
         </TouchableOpacity>

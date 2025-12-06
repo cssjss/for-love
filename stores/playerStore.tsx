@@ -54,12 +54,15 @@ export const playerStore = proxy({
   // 播放
   play() {
     if (!this.audio) return;
+    console.log("id" + this.current.id);
+
     this.audio.play();
     this.isPlaying = true;
   },
   // 点击播放
   async player() {
     const trcks = searchStore.selectedList[playerStore.index];
+    console.log("id" + this.current.id);
     playerStore.setCurrent(trcks);
     await playerStore.load(trcks.url);
     playerStore.play();
