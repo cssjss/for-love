@@ -23,14 +23,12 @@ interface LyricLine {
 }
 
 export function PlayerScreen() {
-  const snap = useSnapshot(searchStore);
+  // const snap = useSnapshot(searchStore);
   const plst = useSnapshot(playerStore);
   const track = plst.current;
 
-  const isPlaying = playerStore?.isPlaying ?? false;
-  const currentTime = playerStore?.currentTime ?? 0; // 秒
-  const duration = playerStore?.duration ?? 0; // 秒
   const [isFavorite, setisFaorite] = useState(false);
+  const { currentTime, duration, isPlaying, ended } = useSnapshot(playerStore);
 
   //解析歌词
   const lyrics: LyricLine[] = useMemo(() => {
@@ -66,12 +64,9 @@ export function PlayerScreen() {
   const currentLyric = lyrics[currentLineIndex]?.text ?? "";
   const nextLyric = lyrics[currentLineIndex + 1]?.text ?? "";
 
-  // 当 track.url 变化时，替换播放源并自动播放
   useEffect(() => {
-    if (!track?.url) return;
-    console.log("name" + track.name);
-    playerStore.play();
-  }, [track.url]);
+    console.log("时间" + currentTime + "isPlaying =", playerStore.isPlaying);
+  }, [currentTime]);
 
   // 播放 / 暂停
   const togglePlay = () => {
@@ -82,7 +77,12 @@ export function PlayerScreen() {
       playerStore.play();
     }
   };
-
+  const nextMusic = () => {
+    playerStore.next();
+  };
+  const lastMusic = () => {
+    playerStore.previous();
+  };
   // 拖动进度条
   const onSeek = (value: number) => {
     playerStore.seek(value);
@@ -95,7 +95,9 @@ export function PlayerScreen() {
     await Clipboard.setStringAsync(playerStore.current.url);
     Alert.alert("提示", "复制成功");
   };
-
+  useEffect(() => {
+    nextMusic();
+  }, [ended]);
   return (
     <View style={styles.container}>
       {/* 歌曲信息 */}
@@ -172,7 +174,7 @@ export function PlayerScreen() {
       {/* 控制按钮 */}
       <View style={styles.controls}>
         <TouchableOpacity
-          onPress={playerStore.previous}
+          onPress={lastMusic}
           disabled={searchStore.selectedList.length === 0}
         >
           <Ionicons
@@ -195,7 +197,7 @@ export function PlayerScreen() {
         </TouchableOpacity>
 
         <TouchableOpacity
-          onPress={playerStore.next}
+          onPress={nextMusic}
           disabled={searchStore.selectedList.length === 0}
         >
           <Ionicons

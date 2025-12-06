@@ -2,20 +2,16 @@ import { proxy } from "valtio";
 import { searchStore } from "./searchStore";
 
 export const playerStore = proxy({
-  // 播放器实例App.tsx注入
   audio: null as any,
 
-  // 当前播放状态
+  // 播放状态
   isPlaying: false,
-  duration: 0,
   currentTime: 0,
-  buffered: 0,
+  duration: 0,
   ended: false,
-  _progressTimer: null as any,
-  // 当前播放索引
+
   index: 0,
 
-  // 当前歌曲
   current: {
     id: "",
     url: "",
@@ -24,14 +20,16 @@ export const playerStore = proxy({
     pic: "",
     lyrics: "",
   },
-  // 由全局注入播放器实例
+
+  // 注入 player 实例
   injectAudioInstance(player: any) {
-    playerStore.audio = player;
-    console.log("全局播放器实例注入成功");
+    this.audio = player;
+    console.log("播放器注入成功");
   },
-  //设置当前歌曲
+
+  // 设置当前歌曲
   setCurrent(track: any) {
-    playerStore.current = {
+    this.current = {
       id: track.id,
       url: track.url,
       name: track.name,
@@ -40,20 +38,24 @@ export const playerStore = proxy({
       lyrics: track.lyrics,
     };
   },
-  // 拖动
-  seek(sec: number) {
-    if (!playerStore.audio) return;
-    playerStore.audio.seek(sec);
-    playerStore.currentTime = sec;
-  },
+
+  // 加载音频
   async load(url: string) {
-    if (!playerStore.audio) return;
+    if (!this.audio) return;
+
     try {
-      await playerStore.audio.replace(url);
-      playerStore.isPlaying = false;
-    } catch (err) {
-      console.warn("加载失败:", err);
+      this.audio.replace(url);
+      this.isPlaying = false;
+    } catch (e) {
+      console.log("加载失败", e);
     }
+  },
+
+  // 播放
+  play() {
+    if (!this.audio) return;
+    this.audio.play();
+    this.isPlaying = true;
   },
   // 点击播放
   async player() {
@@ -63,50 +65,47 @@ export const playerStore = proxy({
     playerStore.play();
     playerStore.isPlaying = true;
   },
-  // 播放
-  play() {
-    try {
-      playerStore.audio?.play();
-      playerStore.isPlaying = true;
-    } catch (err) {
-      console.log("播放失败:", err);
-    }
-  },
-  //暂停
+  // 暂停
   pause() {
-    try {
-      playerStore.audio?.pause();
-      playerStore.isPlaying = false;
-    } catch (err) {
-      console.log("暂停失败:", err);
-    }
+    if (!this.audio) return;
+    this.audio.pause();
+    this.isPlaying = false;
   },
 
-  //下一首
+  // 拖动
+  seek(sec: number) {
+    if (!this.audio) return;
+    this.audio.seekTo(sec);
+    this.currentTime = sec;
+  },
+
+  // 播下一首
   async next() {
     const list = searchStore.selectedList;
-    if (list.length === 0) return;
+    if (!list.length) return;
+    console.log("index" + this.index);
 
-    playerStore.index++;
-    if (playerStore.index >= list.length) playerStore.index = 0;
+    this.index++;
+    if (this.index > list.length - 1) this.index = 0;
+    const track = list[this.index];
+    this.setCurrent(track);
 
-    const nextTrack = list[playerStore.index];
-    playerStore.setCurrent(nextTrack);
-    await playerStore.load(nextTrack.url);
-    playerStore.play();
+    await this.load(track.url);
+    this.play();
   },
 
-  //上一首
+  // 播上一首
   async previous() {
     const list = searchStore.selectedList;
-    if (list.length === 0) return;
+    if (!list.length) return;
 
-    playerStore.index--;
-    if (playerStore.index < 0) playerStore.index = list.length - 1;
+    this.index--;
+    if (this.index < 0) this.index = list.length - 1;
 
-    const prevTrack = list[playerStore.index];
-    playerStore.setCurrent(prevTrack);
-    await playerStore.load(prevTrack.url);
-    playerStore.play();
+    const track = list[this.index];
+    this.setCurrent(track);
+
+    await this.load(track.url);
+    this.play();
   },
 });

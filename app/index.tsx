@@ -1,23 +1,4 @@
 // app/index.tsx
-import { useAudioPlayer, useAudioPlayerStatus } from "expo-audio";
-import { useEffect } from "react";
-import TopTabsBlur from "../components/AppNavigator";
-import { playerStore } from "../stores/playerStore";
 export default function Page() {
-  const player = useAudioPlayer();
-  const status = useAudioPlayerStatus(player);
-
-  useEffect(() => {
-    playerStore.injectAudioInstance(player);
-  }, [player]);
-
-  useEffect(() => {
-    if (!status) return;
-    playerStore.isPlaying = status.playing;
-    playerStore.duration = status.duration ?? 0;
-    playerStore.currentTime = status.currentTime ?? 0;
-    playerStore.ended = status.didJustFinish ?? false;
-    console.log(playerStore.currentTime);
-  }, [status]);
-  return <TopTabsBlur></TopTabsBlur>;
+  // return <TopTabsBlur></TopTabsBlur>;
 }
