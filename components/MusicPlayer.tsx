@@ -64,10 +64,6 @@ export function PlayerScreen() {
   const currentLyric = lyrics[currentLineIndex]?.text ?? "";
   const nextLyric = lyrics[currentLineIndex + 1]?.text ?? "";
 
-  useEffect(() => {
-    console.log("时间" + currentTime + "isPlaying =", playerStore.isPlaying);
-  }, [currentTime]);
-
   // 播放 / 暂停
   const togglePlay = () => {
     if (!playerStore.current?.url) return;
@@ -98,6 +94,12 @@ export function PlayerScreen() {
   useEffect(() => {
     nextMusic();
   }, [ended]);
+  function formatTime(sec: number) {
+    if (!sec || !isFinite(sec)) return "0:00";
+    const m = Math.floor(sec / 60);
+    const s = Math.floor(sec % 60);
+    return `${m}:${s < 10 ? "0" + s : s}`;
+  }
   return (
     <View style={styles.container}>
       {/* 歌曲信息 */}
@@ -221,12 +223,6 @@ export function PlayerScreen() {
       </View>
     </View>
   );
-}
-function formatTime(sec: number) {
-  if (!sec || !isFinite(sec)) return "0:00";
-  const m = Math.floor(sec / 60);
-  const s = Math.floor(sec % 60);
-  return `${m}:${s < 10 ? "0" + s : s}`;
 }
 
 const styles = StyleSheet.create({

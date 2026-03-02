@@ -1,8 +1,10 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
+  Animated,
+  Dimensions,
   Image,
   ScrollView,
   StyleSheet,
@@ -14,17 +16,23 @@ import {
 import { useSnapshot } from "valtio";
 import { playerStore } from "../stores/playerStore";
 import { searchStore } from "../stores/searchStore";
+import MusicPlayerLitt from "./MusicplayLitt";
 
 export default function SearchPage() {
   const snap = useSnapshot(searchStore);
+  const plst = useSnapshot(playerStore);
+  const track = plst.current;
+  //获取手机高度
+  const { height } = Dimensions.get("window");
   // const plst = useSnapshot(playerStore);
   const navigation = useNavigation();
   const [keyword, setKeyword] = useState("");
   const [searched, setSearched] = useState(false);
   const [loading, setLoading] = useState(false);
   // const [source, setSource] = useState<{ uri: string } | null>(null);
-
+  const [playerVisible, setPlayerVisible] = useState(false);
   const formatName = (name?: string) => (name ? name : "暂无");
+  const slideAnim = useRef(new Animated.Value(height)).current; // 初始在底部
 
   // 点击返回
   const onBack = () => {
@@ -50,6 +58,15 @@ export default function SearchPage() {
     playerStore.index = index;
     playerStore.player();
   };
+
+  // 监听 playerVisible 改变
+  useEffect(() => {
+    Animated.timing(slideAnim, {
+      toValue: playerVisible ? height * 0.3 : height, // 上来 70%
+      duration: 300,
+      useNativeDriver: true,
+    }).start();
+  }, [playerVisible]);
 
   return (
     <View style={styles.container}>
@@ -93,7 +110,11 @@ export default function SearchPage() {
 
             <View style={styles.suggestCard}>
               <Image
-                source={require("../assets/images/tt.jpg")}
+                source={
+                  snap.selectedList[0]?.pic
+                    ? { uri: snap.selectedList[0].pic }
+                    : require("../assets/images/tt.jpg")
+                }
                 style={styles.suggestAvatar}
               />
 
@@ -102,12 +123,12 @@ export default function SearchPage() {
                   音乐：{snap.selectedList[0]?.name || "暂无歌曲"} ＞
                 </Text>
                 <Text style={{ color: "#ccc", marginTop: 4 }}>
-                  10w人关注 · 38首歌
+                  10w人关注 · {snap.selectedList?.length || "暂未获取"}首歌
                 </Text>
               </View>
 
               <Image
-                source={require("../assets/images/play.png")}
+                source={require("../assets/images/playgre.png")}
                 style={styles.suggestPlay}
               />
             </View>
@@ -123,7 +144,10 @@ export default function SearchPage() {
               <TouchableOpacity
                 key={song.id}
                 style={styles.musicItem}
-                onPress={() => playMusic(song.name, index)}
+                onPress={() => {
+                  playMusic(song.name, index);
+                  setPlayerVisible(true);
+                }}
               >
                 <View>
                   <Text style={styles.musicName}>{formatName(song.name)}</Text>
@@ -131,7 +155,11 @@ export default function SearchPage() {
                 </View>
 
                 <Image
-                  source={require("../assets/images/playgre.png")}
+                  source={
+                    index === snap.indexSelect
+                      ? require("../assets/images/play.png")
+                      : require("../assets/images/playgre.png")
+                  }
                   style={styles.playIcon}
                 />
               </TouchableOpacity>
@@ -139,7 +167,16 @@ export default function SearchPage() {
           </View>
         )}
       </ScrollView>
-
+      <Animated.View
+        style={[
+          styles.playerContainer,
+          {
+            transform: [{ translateY: slideAnim }],
+          },
+        ]}
+      >
+        <MusicPlayerLitt onClose={() => setPlayerVisible(false)} />
+      </Animated.View>
       {/* 全屏加载遮罩
       {loadingOverlay && (
         <View style={styles.overlay}>
@@ -155,11 +192,20 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(255, 255, 255, 0.8)",
     paddingTop: 10,
   },
-
+  playerContainer: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    height: "100%",
+    borderRadius: 25,
+    zIndex: 99,
+  },
   searchBar: {
     flexDirection: "row",
     alignItems: "center",
     paddingHorizontal: 16,
+    backgroundColor: "rgba(0, 0, 0, 0)",
   },
 
   icon: {

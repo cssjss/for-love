@@ -16,7 +16,7 @@ export default function FavoriteScreen() {
   const snap = useSnapshot(favoriteStore);
 
   useEffect(() => {
-    favoriteStore.loadInitial();
+    favoriteStore.loadInitial(favoriteStore.mainId);
   }, []);
 
   const onScroll = ({ nativeEvent }: any) => {
@@ -24,7 +24,7 @@ export default function FavoriteScreen() {
       nativeEvent.layoutMeasurement.height + nativeEvent.contentOffset.y >=
       nativeEvent.contentSize.height - 20;
     if (bottom) {
-      favoriteStore.loadMore();
+      favoriteStore.loadMore(favoriteStore.mainId);
     }
   };
 

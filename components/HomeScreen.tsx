@@ -86,6 +86,9 @@ const cards: CardItem[] = [
 
 export default function DiscoverScreen() {
   const navigation = useNavigation();
+  const ToPage = (id: string) => {
+    navigation.navigate("SearchPage" as never);
+  };
   return (
     <View style={styles.container}>
       <ScrollView showsVerticalScrollIndicator={false}>
@@ -113,7 +116,11 @@ export default function DiscoverScreen() {
         {/* 卡片网格 */}
         <View style={styles.cardWrapper}>
           {cards.map((item) => (
-            <TouchableOpacity key={item.id} activeOpacity={0.85}>
+            <TouchableOpacity
+              key={item.id}
+              activeOpacity={0.85}
+              onPress={() => ToPage(item.id)}
+            >
               <ImageBackground
                 source={item.img}
                 style={styles.card}

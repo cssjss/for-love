@@ -4,7 +4,7 @@ import { searchStore } from "./searchStore";
 export interface SongItem {
   id: string;
   name: string;
-  artist: string[];
+  artist: string[] | readonly string[];
   pic?: string;
   url?: string;
   lyrics?: string;
@@ -15,10 +15,11 @@ export const favoriteStore = proxy({
   loading: false,
   hasMore: true,
   cursor: 0,
+  mainId: "",
 
-  /** 拉歌单列表（不包含 url / lrc / pic） */
-  async fetchList() {
-    const api = `https://myhkw.cn/open/music/list?key=${searchStore.key}&id=${searchStore.playlistId}&type=${searchStore.musicSource}&format=1`;
+  /** 拉歌单 */
+  async fetchList(id: string) {
+    const api = `https://myhkw.cn/open/music/list?key=${searchStore.key}&id=${id}&type=${searchStore.musicSource}&format=1`;
     const res = await fetch(api);
     const json = await res.json();
     if (!json?.data || !Array.isArray(json.data)) {
@@ -27,7 +28,7 @@ export const favoriteStore = proxy({
     return json.data as SongItem[];
   },
 
-  /** 获取单首歌曲详细信息（包含 url, pic, lrc） */
+  /** 获取单首歌曲详细信息**/
   async fetchSongInfo(id: string) {
     const api = `https://myhkw.cn/open/music/info?key=${searchStore.key}&id=${id}&type=${searchStore.musicSource}&pic=1&url=1&lrc=1`;
     const res = await fetch(api);
@@ -42,13 +43,13 @@ export const favoriteStore = proxy({
     };
   },
 
-  /** 初次加载前 N 首（比如 15 首） */
-  async loadInitial(count = 15) {
+  /** 初次加载前 N 首 */
+  async loadInitial(id: string) {
     if (this.loading) return;
     this.loading = true;
 
-    const list = await this.fetchList();
-    const chunk = list.slice(0, count);
+    const list = await this.fetchList(id);
+    const chunk = list.slice(0, 15);
 
     this.list = chunk;
     this.cursor = chunk.length;
@@ -57,13 +58,13 @@ export const favoriteStore = proxy({
     this.loading = false;
   },
 
-  /** 加载更多（每次 +10 首） */
-  async loadMore(addCount = 10) {
+  /** 加载更多*/
+  async loadMore(id: string) {
     if (this.loading || !this.hasMore) return;
     this.loading = true;
 
-    const list = await this.fetchList();
-    const next = list.slice(this.cursor, this.cursor + addCount);
+    const list = await this.fetchList(id);
+    const next = list.slice(this.cursor, this.cursor + 10);
     this.cursor += next.length;
     this.hasMore = this.cursor < list.length;
 

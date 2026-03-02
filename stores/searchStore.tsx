@@ -20,7 +20,6 @@ export interface MusicDetail {
   lyrics: string;
 }
 
-// ----------- Valtio Store ----------
 export const searchStore = proxy({
   // 音乐播放列表
   onlyPlay: [] as MusicItem[],
@@ -92,7 +91,7 @@ export const searchStore = proxy({
       throw err;
     }
   },
-  //  批量请求 true full detail
+  //  批量请求
   async prefetchAllMusic() {
     const list = searchStore.onlyPlay;
 
