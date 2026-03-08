@@ -1,6 +1,6 @@
 import { proxy } from "valtio";
 // import { subscribeKey } from "valtio/utils";
-
+import { addHistory } from "./historyStore";
 // ----------- 类型定义 ----------
 export interface MusicItem {
   id: string;
@@ -25,7 +25,7 @@ export const searchStore = proxy({
   onlyPlay: [] as MusicItem[],
 
   // 当前选中索引
-  indexSelect: 0,
+  indexSelect: -1,
 
   // 当前播放音乐信息
   selectedList: [] as MusicDetail[],
@@ -50,19 +50,18 @@ export const searchStore = proxy({
 
   // ------- 搜索音乐 --------
   async searchMusic(keyword: string) {
-    console.log("音乐源为 " + searchStore.musicSource);
     searchStore.loading = true;
     searchStore.selectedList = [];
+    searchStore.onlyPlay = [];
     try {
-      const url = `https://myhkw.cn/open/music/search?key=${searchStore.key}&name=${keyword}&type=${searchStore.musicSource}&page=1&limit=20`;
+      const url = `https://myhkw.cn/open/music/search?key=${searchStore.key}&name=${keyword}&type=${searchStore.musicSource}&page=1&limit=20&format=1&pic=1`;
       const res = await fetch(url);
       const data = await res.json();
-
-      if (Array.isArray(data)) {
-        searchStore.onlyPlay = data;
+      if (data) {
+        searchStore.onlyPlay = data.data;
         searchStore.searched = true;
         //  立刻启动批量请求歌曲详情
-        searchStore.prefetchAllMusic();
+        // searchStore.prefetchAllMusic();
       } else {
         console.log("请求超时！");
       }
@@ -75,14 +74,25 @@ export const searchStore = proxy({
 
   // ------- 获取歌曲详细信息 -------
   async fetchMusicUrl(id: string) {
+    searchStore.selectedList = [];
     try {
       const url = `https://myhkw.cn/open/music/info?key=${searchStore.key}&id=${id}&type=${searchStore.musicSource}&pic=1&url=1&lrc=1`;
 
       const res = await fetch(url);
-      const data = await res.json();
+      const detail = await res.json();
 
-      if (data?.data) {
-        return data.data;
+      if (detail?.data) {
+        const songDetail = {
+          id: id,
+          name: detail.data.name,
+          artist: detail.data.artist,
+          url: detail.data.url,
+          pic: detail.data.pic,
+          lyrics: detail.data.lrc,
+        };
+        searchStore.selectedList.push(songDetail);
+        // 出发历史记录
+        addHistory(songDetail);
       } else {
         throw new Error("歌曲信息获取失败");
       }
@@ -90,33 +100,5 @@ export const searchStore = proxy({
       console.log("网络错误", err);
       throw err;
     }
-  },
-  //  批量请求
-  async prefetchAllMusic() {
-    const list = searchStore.onlyPlay;
-
-    console.log(`开始批量加载，共 ${list.length} 首`);
-
-    for (let i = 0; i < list.length; i++) {
-      const item = list[i];
-
-      try {
-        const detail = await searchStore.fetchMusicUrl(item.id);
-
-        // 添加 id，保持数据一致
-        searchStore.selectedList.push({
-          id: item.id,
-          name: detail.name,
-          artist: detail.artist,
-          url: detail.url,
-          pic: detail.pic,
-          lyrics: detail.lrc,
-        });
-      } catch (err) {
-        console.warn("获取失败：", item.id, err);
-      }
-    }
-
-    console.log("批量加载完成！");
   },
 });

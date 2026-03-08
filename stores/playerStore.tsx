@@ -1,15 +1,13 @@
+import TrackPlayer, { Event, State } from "react-native-track-player";
 import { proxy } from "valtio";
 import { searchStore } from "./searchStore";
 
 export const playerStore = proxy({
-  audio: null as any,
-
   // 播放状态
   isPlaying: false,
   currentTime: 0,
   duration: 0,
   ended: false,
-
   index: 0,
 
   current: {
@@ -19,12 +17,6 @@ export const playerStore = proxy({
     artist: "",
     pic: "",
     lyrics: "",
-  },
-
-  // 注入 player 实例
-  injectAudioInstance(player: any) {
-    this.audio = player;
-    console.log("播放器注入成功");
   },
 
   // 设置当前歌曲
@@ -39,76 +31,98 @@ export const playerStore = proxy({
     };
   },
 
-  // 加载音频
-  async load(url: string) {
-    if (!this.audio) return;
-
+  async load(track: any) {
     try {
-      this.audio.replace(url);
+      await TrackPlayer.reset(); // 清空上一首
+      await TrackPlayer.add({
+        id: track.id,
+        url: track.url,
+        title: track.name || "未知歌曲",
+        artist: track.artist || "未知歌手",
+        artwork: track.pic || require("../assets/images/ygdj.jpg"),
+      });
+
       this.isPlaying = false;
+      this.ended = false;
+      this.currentTime = 0; // 进度归零
     } catch (e) {
-      console.log("加载失败", e);
+      console.log("加载引擎失败", e);
     }
   },
 
   // 播放
-  play() {
-    if (!this.audio) return;
-    console.log("id" + this.current.id);
-
-    this.audio.play();
-    this.isPlaying = true;
+  async play() {
+    await TrackPlayer.play();
   },
-  // 点击播放
+
+  // 列表点击播放
   async player() {
-    const trcks = searchStore.selectedList[playerStore.index];
-    console.log("id" + this.current.id);
-    playerStore.setCurrent(trcks);
-    await playerStore.load(trcks.url);
-    playerStore.play();
-    playerStore.isPlaying = true;
-  },
-  // 暂停
-  pause() {
-    if (!this.audio) return;
-    this.audio.pause();
-    this.isPlaying = false;
+    const track = searchStore.selectedList[0];
+    this.setCurrent(track);
+    await this.load(track);
+    await this.play();
   },
 
-  // 拖动
-  seek(sec: number) {
-    if (!this.audio) return;
-    this.audio.seekTo(sec);
+  // 暂停
+  async pause() {
+    await TrackPlayer.pause();
+  },
+
+  // 拖动进度条
+  async seek(sec: number) {
+    await TrackPlayer.seekTo(sec);
     this.currentTime = sec;
   },
 
   // 播下一首
   async next() {
-    const list = searchStore.selectedList;
+    const list = searchStore.onlyPlay;
     if (!list.length) return;
-    console.log("index" + this.index);
-
     this.index++;
     if (this.index > list.length - 1) this.index = 0;
-    const track = list[this.index];
-    this.setCurrent(track);
 
-    await this.load(track.url);
-    this.play();
+    await searchStore.fetchMusicUrl(list[this.index].id);
+    const track = searchStore.selectedList[0];
+    this.setCurrent(track);
+    await this.load(track);
+    await this.play();
   },
 
   // 播上一首
   async previous() {
-    const list = searchStore.selectedList;
+    const list = searchStore.onlyPlay;
     if (!list.length) return;
-
     this.index--;
     if (this.index < 0) this.index = list.length - 1;
 
-    const track = list[this.index];
+    await searchStore.fetchMusicUrl(list[this.index].id);
+    const track = searchStore.selectedList[0];
     this.setCurrent(track);
-
-    await this.load(track.url);
-    this.play();
+    await this.load(track);
+    await this.play();
   },
+});
+
+// 完全脱离 React 组件的底层状态同步机制
+let progressInterval: any;
+
+TrackPlayer.addEventListener(Event.PlaybackState, async (event) => {
+  // 同步播放/暂停状态
+  playerStore.isPlaying = event.state === State.Playing;
+
+  //只有在播放时，才开启高频进度条拉取
+  if (event.state === State.Playing) {
+    progressInterval = setInterval(async () => {
+      const progress = await TrackPlayer.getProgress();
+      playerStore.currentTime = progress.position;
+      playerStore.duration = progress.duration;
+    }, 1000); // 每秒同步一次
+  } else {
+    clearInterval(progressInterval);
+  }
+  if (event.state === State.Ended) {
+    playerStore.ended = true;
+  } else {
+    playerStore.ended = false;
+  }
 });

@@ -9,7 +9,10 @@
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "infoPlist": {
+        "UIBackgroundModes": ["audio"]
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -20,7 +23,8 @@
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
-      "package": "com.anonymous.forlove"
+      "package": "com.anonymous.forlove",
+      "permissions": ["WAKE_LOCK"]
     },
     "web": {
       "output": "static",
@@ -40,7 +44,16 @@
           }
         }
       ],
-      "expo-audio"
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "minSdkVersion": 24,
+            "compileSdkVersion": 35,
+            "targetSdkVersion": 35
+          }
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true,

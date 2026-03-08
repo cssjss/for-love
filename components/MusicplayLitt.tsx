@@ -1,7 +1,9 @@
 import { Ionicons } from "@expo/vector-icons";
 import Slider from "@react-native-community/slider";
+import { useNavigation } from "@react-navigation/native";
+import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { Image } from "expo-image";
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   Dimensions,
   StyleSheet,
@@ -9,16 +11,26 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import TrackPlayer, {
+  State,
+  usePlaybackState,
+  useProgress,
+} from "react-native-track-player";
 import { useSnapshot } from "valtio";
 import { playerStore } from "../stores/playerStore";
 import { searchStore } from "../stores/searchStore";
-
+import { RootStackParamList } from "./musiclist";
 const { width } = Dimensions.get("window");
 
 export default function MusicPlayerLitt({ onClose }: { onClose: () => void }) {
+  const { position: currentTime, duration } = useProgress(500);
+  const playbackState = usePlaybackState(); // 保留作为辅助触发器
+  const [isPlaying, setIsPlaying] = useState(false); // 本地接管图标状态
   const plst = useSnapshot(playerStore);
   const track = plst.current;
-  const { currentTime, duration, isPlaying, ended } = useSnapshot(playerStore);
+
+  const navigation =
+    useNavigation<NativeStackNavigationProp<RootStackParamList>>();
 
   const lyrics = useMemo(() => {
     if (!track?.lyrics) return [];
@@ -52,20 +64,53 @@ export default function MusicPlayerLitt({ onClose }: { onClose: () => void }) {
   const currentLyric = lyrics[currentLineIndex]?.text ?? "";
   const nextLyric = lyrics[currentLineIndex + 1]?.text ?? "";
 
-  // ---------- 播放控制 ----------
-  const togglePlay = () => {
-    if (!playerStore.current?.url) return;
-    isPlaying ? playerStore.pause() : playerStore.play();
+  const togglePlay = async () => {
+    try {
+      if (!track) {
+        return;
+      }
+
+      if (isPlaying) {
+        await TrackPlayer.pause();
+        setIsPlaying(false);
+      } else {
+        if (duration > 0 && currentTime >= duration - 0.5) {
+          await TrackPlayer.seekTo(0);
+        }
+        await TrackPlayer.play();
+        setIsPlaying(true);
+      }
+    } catch (error) {
+      console.log("播放控制失败:", error);
+    }
   };
 
   const nextMusic = () => playerStore.next();
   const lastMusic = () => playerStore.previous();
   const onSeek = (value: number) => playerStore.seek(value);
-
+  function formatTime(sec: number) {
+    if (!sec || !isFinite(sec)) return "0:00";
+    const m = Math.floor(sec / 60);
+    const s = Math.floor(sec % 60);
+    return `${m}:${s < 10 ? "0" + s : s}`;
+  }
   useEffect(() => {
-    if (ended) nextMusic();
-  }, [ended]);
+    const syncState = async () => {
+      // 绕过钩子的返回值，直接去底层查绝对状态
+      const stateObj = await TrackPlayer.getPlaybackState();
+      const realState =
+        typeof stateObj === "object" ? (stateObj as any)?.state : stateObj;
 
+      setIsPlaying(
+        realState === State.Playing ||
+          realState === State.Buffering ||
+          realState === "playing" ||
+          realState === "buffering" ||
+          realState === 3,
+      );
+    };
+    syncState();
+  }, [currentTime, playbackState]);
   return (
     <View style={styles.container}>
       {/* 关闭按钮 */}
@@ -85,18 +130,24 @@ export default function MusicPlayerLitt({ onClose }: { onClose: () => void }) {
 
       {/* 封面 */}
       <View style={styles.coverPlaceholder}>
-        <Image
-          style={styles.Placeholder}
-          source={
-            track?.pic
-              ? { uri: track.pic }
-              : require("../assets/images/bg.jpeg")
-          }
-          placeholder={require("../assets/images/bg.jpeg")}
-          contentFit="cover"
-          transition={300}
-          cachePolicy="disk"
-        />
+        <TouchableOpacity
+          onPress={() => {
+            navigation.navigate("Tabs", { screen: "播放", initial: false });
+          }}
+        >
+          <Image
+            style={styles.Placeholder}
+            source={
+              track?.pic
+                ? { uri: track.pic }
+                : require("../assets/images/bg.jpeg")
+            }
+            placeholder={require("../assets/images/bg.jpeg")}
+            contentFit="cover"
+            transition={300}
+            cachePolicy="disk"
+          />
+        </TouchableOpacity>
       </View>
 
       {/* 歌词两行 */}
@@ -149,13 +200,6 @@ export default function MusicPlayerLitt({ onClose }: { onClose: () => void }) {
   );
 }
 
-function formatTime(sec: number) {
-  if (!sec || !isFinite(sec)) return "0:00";
-  const m = Math.floor(sec / 60);
-  const s = Math.floor(sec % 60);
-  return `${m}:${s < 10 ? "0" + s : s}`;
-}
-
 const styles = StyleSheet.create({
   container: {
     height: "100%",
@@ -183,17 +227,22 @@ const styles = StyleSheet.create({
   },
   Placeholder: { width: "100%", height: "100%", borderRadius: 16 },
 
-  lyricsBox: { height: 50, alignItems: "center", justifyContent: "center" },
+  lyricsBox: {
+    height: 50,
+    alignItems: "center",
+    justifyContent: "center",
+  },
   lyricCurrent: { fontSize: 18, fontWeight: "bold" },
   lyricNext: { fontSize: 14, color: "#666" },
 
   progressRow: {
+    height: 30,
     flexDirection: "row",
-    alignItems: "center",
+
     marginTop: 30,
-    marginBottom: 30,
+    marginBottom: 25,
   },
-  timeText: { width: 30, textAlign: "center", color: "#000" },
+  timeText: { width: 30, textAlign: "center", color: "#000", top: 5 },
 
   controls: {
     flexDirection: "row",

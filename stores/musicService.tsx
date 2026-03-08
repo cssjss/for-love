@@ -1,4 +1,3 @@
-// 返回给 UI 渲染的标准音乐对象
 export interface MusicItem {
   id: string;
   name: string;
@@ -9,7 +8,6 @@ interface ApiData {
   songId?: string[];
   songName?: string[];
   artistName?: string[];
-  // 其他未使用的字段在此省略，保持类型定义轻量
 }
 
 // 定义后端响应体的根结构
@@ -20,8 +18,7 @@ interface ApiResponse {
 }
 
 /**
- * 获取并清洗歌单前 20 首歌曲数据
- * @param playlistId - 歌单的唯一标识 ID
+ * @param playlistId
  * @returns 清洗后的音乐列表数组 Promise
  */
 export const fetchMusicList = async (
@@ -31,7 +28,7 @@ export const fetchMusicList = async (
   const API_KEY = "9d16990ac15846c0b4e65da6e6094522";
 
   try {
-    const url = `${API_BASE_URL}?key=${API_KEY}&id=${playlistId}&type=qq`;
+    const url = `${API_BASE_URL}?key=${API_KEY}&id=${playlistId}&type=qq&format=1`;
     const response = await fetch(url);
 
     if (!response.ok) {
@@ -40,13 +37,14 @@ export const fetchMusicList = async (
 
     const result = (await response.json()) as ApiResponse;
     const responseData = result?.data;
+
     if (
       !responseData ||
       !Array.isArray(responseData.songId) ||
       !Array.isArray(responseData.songName) ||
       !Array.isArray(responseData.artistName)
     ) {
-      throw new Error("接口返回数据异常：缺失或不符合平行数组结构");
+      throw new Error("接口返回数据异常");
     }
 
     const { songId, songName, artistName } = responseData;
