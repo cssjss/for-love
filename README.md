@@ -48,3 +48,22 @@ Join our community of developers creating universal apps.
 
 - [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
 - [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+
+## 启动项目
+启动手机预览
+npx expo run:android --device
+
+## 装到真机后要做热更新预览
+cd /d C:\Users\24114\Desktop\project\yourself
+adb reverse tcp:8081 tcp:8081
+npx expo start --dev-client -c
+
+## 应用打包命令
+cd /d C:\Users\24114\Desktop\project\yourself
+
+cd android
+gradlew.bat clean
+gradlew.bat assembleRelease
+
+打包成功后，APK 文件在这里：
+C:\Users\24114\Desktop\project\yourself\android\app\build\outputs\apk\release\app-release.apk

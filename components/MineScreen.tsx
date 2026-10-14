@@ -1,38 +1,43 @@
+import { useNavigation } from "@react-navigation/native";
+import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import React, { useState } from "react";
 import {
-  View,
-  Text,
-  TouchableOpacity,
   Image,
-  StyleSheet,
   Modal,
   Pressable,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
-import { useNavigation } from "@react-navigation/native";
-
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { RootStackParamList } from "./musiclist";
 interface SourceItem {
   id: string;
   name: string;
 }
 
 export default function MyScreen() {
-  const navigation = useNavigation();
-
+  const insets = useSafeAreaInsets();
   const [activeItem, setActiveItem] = useState<string>("");
   const [showSourceList, setShowSourceList] = useState(false);
   const [currentSource, setCurrentSource] = useState("qq");
   const [showVersion, setShowVersion] = useState(false);
+  const navigation =
+    useNavigation<NativeStackNavigationProp<RootStackParamList>>();
 
   const sourceList: SourceItem[] = [
     { id: "qq", name: "QQ音乐" },
     { id: "wy", name: "网易云音乐" },
   ];
 
-  const press = (key: string) => setActiveItem(key);
-  const release = () => setTimeout(() => setActiveItem(""), 150);
-
   return (
-    <View style={styles.container}>
+    <View
+      style={[
+        styles.container,
+        { paddingTop: Math.max(insets.top + 16, 36) },
+      ]}
+    >
       {/* 顶部封面 */}
       <View style={styles.photoBox}>
         <Image
@@ -45,9 +50,7 @@ export default function MyScreen() {
       {/* 我的喜欢 */}
       <TouchableOpacity
         activeOpacity={0.8}
-        onPress={() => navigation.navigate("LovePage" as never)}
-        onPressIn={() => press("likes")}
-        onPressOut={release}
+        onPress={() => navigation.navigate("MyFavoriteScreen")}
         style={[styles.item, activeItem === "likes" && styles.itemActive]}
       >
         <Image
@@ -64,9 +67,7 @@ export default function MyScreen() {
       {/* 历史播放 */}
       <TouchableOpacity
         activeOpacity={0.8}
-        onPress={() => navigation.navigate("HistoryPage" as never)}
-        onPressIn={() => press("history")}
-        onPressOut={release}
+        onPress={() => navigation.navigate("HistoryScreen")}
         style={[styles.item, activeItem === "history" && styles.itemActive]}
       >
         <Image
@@ -81,10 +82,8 @@ export default function MyScreen() {
       </TouchableOpacity>
 
       {/* 播放源 */}
-      <TouchableOpacity
+      {/* <TouchableOpacity
         activeOpacity={0.8}
-        onPressIn={() => press("source")}
-        onPressOut={release}
         onPress={() => setShowSourceList(true)}
         style={[styles.item, activeItem === "source" && styles.itemActive]}
       >
@@ -96,13 +95,11 @@ export default function MyScreen() {
         <Text style={styles.grayText}>
           {currentSource === "qq" ? "QQ音乐" : "网易云音乐"}
         </Text>
-      </TouchableOpacity>
+      </TouchableOpacity> */}
 
       {/* 版本号 */}
       <TouchableOpacity
         activeOpacity={0.8}
-        onPressIn={() => press("version")}
-        onPressOut={release}
         onPress={() => setShowVersion(true)}
         style={[styles.item, activeItem === "version" && styles.itemActive]}
       >
@@ -154,16 +151,16 @@ export default function MyScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    paddingTop: 80,
     backgroundColor: "rgba(255, 255, 255, 0.8)",
   },
 
   photoBox: {
     width: "90%",
-    height: 200,
+    height: 180,
     alignSelf: "center",
     borderRadius: 20,
     overflow: "hidden",
+    marginBottom: 4,
   },
 
   photo: {
@@ -172,8 +169,8 @@ const styles = StyleSheet.create({
   },
 
   item: {
-    marginTop: 12,
-    height: 60,
+    marginTop: 10,
+    height: 56,
     width: "90%",
     alignSelf: "center",
     backgroundColor: "rgba(56, 182, 119, 0.25)",
